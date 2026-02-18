@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Snake Game</title>
+  <style>
+    body {
+      background: #222;
+      color: white;
+      text-align: center;
+      font-family: Arial;
+    }
+    canvas {
+      background: black;
+      border: 3px solid lime;
+      margin-top: 10px;
+      display: block;
+      margin-left: auto;
+      margin-right: auto;
+      touch-action: none;
+    }
+    button {
+      margin-top: 10px;
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+<h1>Snake Game 🐍</h1>
+<p>aloo studio game</p>
+
+<canvas id="game" width="400" height="400"></canvas>
+
+<button onclick="resetGame()">🔁 Reset Game</button>
+
+<script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+const box = 20;
+let snake, dx, dy, food, game;
+
+function init() {
+  snake = [{ x: 200, y: 200 }];
+  dx = box;
+  dy = 0;
+  food = {
+    x: Math.floor(Math.random() * 20) * box,
+    y: Math.floor(Math.random() * 20) * box
+  };
+}
+
+// Arrow key control
+document.addEventListener("keydown", e => {
+  if (e.key === "ArrowUp" && dy === 0) { dx = 0; dy = -box; }
+  if (e.key === "ArrowDown" && dy === 0) { dx = 0; dy = box; }
+  if (e.key === "ArrowLeft" && dx === 0) { dx = -box; dy = 0; }
+  if (e.key === "ArrowRight" && dx === 0) { dx = box; dy = 0; }
+});
+
+// Mobile swipe
+let startX, startY;
+canvas.addEventListener("touchstart", e => {
+  const touch = e.touches[0];
+  startX = touch.clientX;
+  startY = touch.clientY;
+});
+canvas.addEventListener("touchend", e => {
+  const touch = e.changedTouches[0];
+  let diffX = touch.clientX - startX;
+  let diffY = touch.clientY - startY;
+  if (Math.abs(diffX) > Math.abs(diffY)) {
+    if (diffX > 0 && dx === 0) { dx = box; dy = 0; }
+    if (diffX < 0 && dx === 0) { dx = -box; dy = 0; }
+  } else {
+    if (diffY > 0 && dy === 0) { dx = 0; dy = box; }
+    if (diffY < 0 && dy === 0) { dx = 0; dy = -box; }
+  }
+});
+
+function bodyCollision(head, body) {
+  return body.some(p => p.x === head.x && p.y === head.y);
+}
+
+// Draw snake with black eyes
+function drawSnake() {
+  snake.forEach((p, index) => {
+    ctx.fillStyle = "lime";
+    ctx.fillRect(p.x, p.y, box, box);
+
+    if (index === 0) {
+      ctx.fillStyle = "black"; // <-- Eyes color black
+      let eyeSize = box / 5;
+      let offsetX = (dx > 0) ? box - eyeSize*2 : (dx < 0) ? eyeSize : box/4;
+      let offsetY = (dy > 0) ? box - eyeSize*2 : (dy < 0) ? eyeSize : box/4;
+
+      ctx.fillRect(p.x + offsetX, p.y + offsetY, eyeSize, eyeSize);
+      ctx.fillRect(p.x + offsetX, p.y + offsetY + eyeSize*2, eyeSize, eyeSize);
+    }
+  });
+}
+
+function gameLoop() {
+  ctx.fillStyle = "black";
+  ctx.fillRect(0, 0, 400, 400);
+
+  // draw food
+  ctx.fillStyle = "red";
+  ctx.fillRect(food.x, food.y, box, box);
+
+  drawSnake();
+
+  let head = { x: snake[0].x + dx, y: snake[0].y + dy };
+
+  // wall wrap
+  if (head.x < 0) head.x = 380;
+  if (head.x > 380) head.x = 0;
+  if (head.y < 0) head.y = 380;
+  if (head.y > 380) head.y = 0;
+
+  // self collision
+  if (bodyCollision(head, snake)) {
+    alert("Game Over 💀");
+    clearInterval(game);
+    return;
+  }
+
+  // eat food
+  if (head.x === food.x && head.y === food.y) {
+    food = {
+      x: Math.floor(Math.random() * 20) * box,
+      y: Math.floor(Math.random() * 20) * box
+    };
+  } else {
+    snake.pop();
+  }
+
+  snake.unshift(head);
+}
+
+function resetGame() {
+  clearInterval(game);
+  init();
+  game = setInterval(gameLoop, 150);
+}
+
+// start
+init();
+game = setInterval(gameLoop, 150);
+</script>
+
+</body>
+</html>
